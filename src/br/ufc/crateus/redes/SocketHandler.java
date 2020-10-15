@@ -3,6 +3,7 @@ package br.ufc.crateus.redes;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.Map;
 
 public class SocketHandler extends Thread {
 	private Socket socket;
@@ -14,17 +15,38 @@ public class SocketHandler extends Thread {
 	public void handler() throws IOException {
 		Request request = new Request(socket.getInputStream());
 		Response response = null;
-		
-		if(request.getPath().equals("/") && request.getMethod() == Method.GET) {
+		try {
+		if(request.getPath().equals("/login") && request.getMethod() == Method.POST) {
+			Map<String, String> params =  request.getBodyParams();
 			response = new Response(StatusCode.OK);
 			response.setContentType("text/html");
-			if(request.getBody() != null && !request.getBody().isBlank()) {
-				response.setBody("<p> Bem vindo: " + request.getBody() +"</p>");				
-			} else {
-				response.setBody("<p>Bem vindo pelo browser</p>");
-			}
+			response.setBody(HtmlResponse.getResponse(UserData.getInstance().login(params.get("email"), params.get("password"))));
+		}
+		else if (request.getPath().equals("/login") && request.getMethod() == Method.GET) {
+			response = new Response(StatusCode.OK);
+			response.setContentType("text/html");
+			response.setBody(HtmlResponse.LOGIN_HTML);
 		} else {
-			response = new Response(StatusCode.NOT_FOUND);
+			if(request.getAccept() != null && request.getAccept().contains("text/html")) {
+				response = new Response(StatusCode.OK);
+				response.setContentType("text/html");
+				response.setBody(HtmlResponse.HTML_NOT_FOUND);				
+			}
+			else {
+				response = new Response(StatusCode.NOT_FOUND);
+				response.setContentType("application/json");
+			}
+		}
+		}catch (Throwable e) {
+			if(request.getAccept() != null && request.getAccept().contains("text/html")) {
+				response = new Response(StatusCode.OK);
+				response.setContentType("text/html");
+				response.setBody(HtmlResponse.HTML_INTERNAL_ERROR);				
+			}
+			else {
+				response = new Response(StatusCode.INTERNAL_ERROR);
+				response.setContentType("application/json");
+			}
 		}
 
 		OutputStream outputStream = socket.getOutputStream();

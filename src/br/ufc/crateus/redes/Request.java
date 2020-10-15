@@ -6,6 +6,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -61,6 +63,15 @@ public class Request {
 		return requestHeaders.size();
 	}
 	
+	public Map<String, String> getBodyParams() throws UnsupportedEncodingException {
+		Map<String, String> params = new HashMap<String, String>();
+		for(String s : body.split("&")) {
+			String param[] = s.split("=");
+			params.put(param[0], URLDecoder.decode(param[1], "UTF-8"));
+		}
+		return params;
+	}
+	
 	private void init() throws IOException {
 		readMessage();
 	}
@@ -83,5 +94,9 @@ public class Request {
 	
 	public String getBody() {
 		return body;
+	}
+	
+	public String getAccept() {
+		return this.headers.getOrDefault("Accept", null);
 	}
 }

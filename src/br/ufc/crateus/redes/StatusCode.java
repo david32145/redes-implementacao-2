@@ -2,7 +2,8 @@ package br.ufc.crateus.redes;
 
 public enum StatusCode {
 	OK(200, "OK"),
-	NOT_FOUND(404, "Not Found");
+	NOT_FOUND(404, "Not Found"),
+	INTERNAL_ERROR(500, "Internal Server Error");
 	
 	private int code;
 	private String name;
