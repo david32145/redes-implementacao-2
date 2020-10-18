@@ -16,41 +16,50 @@ public class SocketHandler extends Thread {
 		Request request = new Request(socket.getInputStream());
 		Response response = null;
 		try {
-		if(request.getPath().equals("/login") && request.getMethod() == Method.POST) {
-			Map<String, String> params =  request.getBodyParams();
-			response = new Response(StatusCode.OK);
-			response.setContentType("text/html");
-			response.setBody(HtmlResponse.getResponse(UserData.getInstance().login(params.get("email"), params.get("password"))));
-		}
-		else if (request.getPath().equals("/login") && request.getMethod() == Method.GET) {
-			response = new Response(StatusCode.OK);
-			response.setContentType("text/html");
-			response.setBody(HtmlResponse.LOGIN_HTML);
-		} else {
-			if(request.getAccept() != null && request.getAccept().contains("text/html")) {
+			if (request.isPostFor("/login")) {
+				Map<String, String> params = request.getBodyParams();
+				String result = UserData
+							.getInstance()
+							.login(params.get("email"), params.get("password"));
+				if (result.startsWith("Bem vindo")) {
+					response = new Response(StatusCode.OK);
+				} else {
+					response = new Response(StatusCode.BAD_REQUEST);
+				}
+				if(request.isBrowserRequest()) {
+					response.setBody(HtmlResponse.getResponse(result));
+					response.setContentType("text/html");
+				} else {
+					response.setBody(String.format("{\"message\": \"%s\"}", result));
+					response.setContentType("application/json");
+				}
+			} else if (request.isGetFor("/login")) {
 				response = new Response(StatusCode.OK);
 				response.setContentType("text/html");
-				response.setBody(HtmlResponse.HTML_NOT_FOUND);				
+				response.setBody(HtmlResponse.LOGIN_HTML);
+			} else {
+				if (request.isBrowserRequest()) {
+					response = new Response(StatusCode.OK);
+					response.setContentType("text/html");
+					response.setBody(HtmlResponse.HTML_NOT_FOUND);
+				} else {
+					response = new Response(StatusCode.NOT_FOUND);
+					response.setContentType("application/json");
+				}
 			}
-			else {
-				response = new Response(StatusCode.NOT_FOUND);
-				response.setContentType("application/json");
-			}
-		}
-		}catch (Throwable e) {
-			if(request.getAccept() != null && request.getAccept().contains("text/html")) {
+		} catch (Throwable e) {
+			if (request.isBrowserRequest()) {
 				response = new Response(StatusCode.OK);
 				response.setContentType("text/html");
-				response.setBody(HtmlResponse.HTML_INTERNAL_ERROR);				
-			}
-			else {
+				response.setBody(HtmlResponse.HTML_INTERNAL_ERROR);
+			} else {
 				response = new Response(StatusCode.INTERNAL_ERROR);
 				response.setContentType("application/json");
 			}
 		}
 
 		OutputStream outputStream = socket.getOutputStream();
-		outputStream.write(response.getMessage().getBytes());
+		outputStream.write(response.getMessage().getBytes("UTF-8"));
 		outputStream.flush();
 		socket.close();
 	}

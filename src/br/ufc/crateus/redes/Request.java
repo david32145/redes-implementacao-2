@@ -72,6 +72,18 @@ public class Request {
 		return params;
 	}
 	
+	public boolean isPostFor(String path) {
+		return method == Method.POST && path.equals(this.path);
+	}
+	
+	public boolean isGetFor(String path) {
+		return method == Method.GET && path.equals(this.path);
+	}
+	
+	public boolean isBrowserRequest() {
+		return getAccept() != null && getAccept().contains("text/html");
+	}
+	
 	private void init() throws IOException {
 		readMessage();
 	}

@@ -29,6 +29,6 @@ public class UserData {
 			}
 			return "Senha incorreta";
 		}
-		return "Usuário não encontrado";
+		return "Email inexistente";
 	}
 }
